@@ -130,6 +130,16 @@ enum _dr_us915_t { DR_SF10=0, DR_SF9, DR_SF8, DR_SF7, DR_SF8C, DR_NONE,
 enum { DR_DFLTMIN = DR_SF8C };
 enum { DR_PAGE = DR_PAGE_US915 };
 
+#if defined(CFG_as920)
+// Default frequency plan for AS 920MHz used in South East Asia (Malaysia, Singapore, Thailand, etc.)
+enum { US915_125kHz_UPFBASE = 920000000,
+       US915_125kHz_UPFSTEP =    200000,
+       US915_500kHz_UPFBASE = 927000000,
+       US915_500kHz_UPFSTEP =   1600000,
+       US915_500kHz_DNFBASE = 923300000,
+       US915_500kHz_DNFSTEP =    600000
+};
+#else
 // Default frequency plan for US 915MHz
 enum { US915_125kHz_UPFBASE = 902300000,
        US915_125kHz_UPFSTEP =    200000,
@@ -138,6 +148,8 @@ enum { US915_125kHz_UPFBASE = 902300000,
        US915_500kHz_DNFBASE = 923300000,
        US915_500kHz_DNFSTEP =    600000
 };
+#endif
+
 enum { US915_FREQ_MIN = 902000000,
        US915_FREQ_MAX = 928000000 };
 
