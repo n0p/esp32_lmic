@@ -774,7 +774,36 @@ bit_t LMIC_setupChannel (u1_t chidx, u4_t freq, u2_t drmap, s1_t band) {
 
 void LMIC_disableChannel (u1_t channel) {
     if( channel < 72+MAX_XCHANNELS )
-        LMIC.channelMap[channel/4] &= ~(1<<(channel&0xF));
+        LMIC.channelMap[channel>>4] &= ~(1<<(channel&0xF));
+}
+
+void LMIC_enableChannel (u1_t channel) {
+    if( channel < 72+MAX_XCHANNELS )
+        LMIC.channelMap[channel>>4] |= (1<<(channel&0xF));
+}
+
+void  LMIC_enableSubBand (u1_t band) {
+  ASSERT(band < 8);
+  u1_t start = band * 8;
+  u1_t end = start + 8;
+  for (int channel=start; channel < end; ++channel )
+      LMIC_enableChannel(channel);
+}
+void  LMIC_disableSubBand (u1_t band) {
+  ASSERT(band < 8);
+  u1_t start = band * 8;
+  u1_t end = start + 8;
+  for (int channel=start; channel < end; ++channel )
+      LMIC_disableChannel(channel);
+}
+void  LMIC_selectSubBand (u1_t band) {
+  ASSERT(band < 8);
+  for (int b=0; b<8; ++b) {
+    if (band==b)
+      LMIC_enableSubBand(b);
+    else
+      LMIC_disableSubBand(b);
+  }
 }
 
 static u1_t mapChannels (u1_t chpage, u2_t chmap) {

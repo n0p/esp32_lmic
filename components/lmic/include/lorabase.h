@@ -28,6 +28,10 @@
 #ifndef _lorabase_h_
 #define _lorabase_h_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // ================================================================================
 // BEG: Keep in sync with lorabase.hpp
 //
@@ -126,6 +130,16 @@ enum _dr_us915_t { DR_SF10=0, DR_SF9, DR_SF8, DR_SF7, DR_SF8C, DR_NONE,
 enum { DR_DFLTMIN = DR_SF8C };
 enum { DR_PAGE = DR_PAGE_US915 };
 
+#if defined(CFG_as920)
+// Default frequency plan for AS 920MHz used in South East Asia (Malaysia, Singapore, Thailand, etc.)
+enum { US915_125kHz_UPFBASE = 920000000,
+       US915_125kHz_UPFSTEP =    200000,
+       US915_500kHz_UPFBASE = 927000000,
+       US915_500kHz_UPFSTEP =   1600000,
+       US915_500kHz_DNFBASE = 923300000,
+       US915_500kHz_DNFSTEP =    600000
+};
+#else
 // Default frequency plan for US 915MHz
 enum { US915_125kHz_UPFBASE = 902300000,
        US915_125kHz_UPFSTEP =    200000,
@@ -134,6 +148,8 @@ enum { US915_125kHz_UPFBASE = 902300000,
        US915_500kHz_DNFBASE = 923300000,
        US915_500kHz_DNFSTEP =    600000
 };
+#endif
+
 enum { US915_FREQ_MIN = 902000000,
        US915_FREQ_MAX = 928000000 };
 
@@ -380,7 +396,7 @@ inline int isFasterDR (dr_t dr1, dr_t dr2) { return dr1 > dr2; }
 inline int isSlowerDR (dr_t dr1, dr_t dr2) { return dr1 < dr2; }
 inline dr_t  incDR    (dr_t dr) { return _DR2RPS_CRC[dr+2]==ILLEGAL_RPS ? dr : (dr_t)(dr+1); } // increase data rate
 inline dr_t  decDR    (dr_t dr) { return _DR2RPS_CRC[dr  ]==ILLEGAL_RPS ? dr : (dr_t)(dr-1); } // decrease data rate
-inline dr_t  assertDR (dr_t dr) { return _DR2RPS_CRC[dr+1]==ILLEGAL_RPS ? DR_DFLTMIN : dr; }   // force into a valid DR
+inline dr_t  assertDR (dr_t dr) { return _DR2RPS_CRC[dr+1]==ILLEGAL_RPS ? (dr_t) DR_DFLTMIN : dr; }   // force into a valid DR
 inline bit_t validDR  (dr_t dr) { return _DR2RPS_CRC[dr+1]!=ILLEGAL_RPS; } // in range
 inline dr_t  lowerDR  (dr_t dr, u1_t n) { while(n--){dr=decDR(dr);} return dr; } // decrease data rate by n steps
 
@@ -396,5 +412,9 @@ ostime_t calcAirTime (rps_t rps, u1_t plen);
 // Sensitivity at given SF/BW
 int getSensitivity (rps_t rps);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _lorabase_h_

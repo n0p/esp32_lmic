@@ -33,9 +33,10 @@ static struct {
     osjob_t* runnablejobs;
 } OS;
 
-void os_init () {
+void os_init (uint8_t spi) 
+{
     memset(&OS, 0x00, sizeof(OS));
-    hal_init();
+    hal_init(spi);
     radio_init();
     LMIC_init();
 }
@@ -114,6 +115,11 @@ void os_run () {
       hal_sleep(); // wake by irq (timer already restarted)
   }
   hal_enableIRQs();
+
+  // Call hal_iocheck() to find out pending
+  // IRQ's that needs to be serviced.
+  hal_io_check();
+
   if(j) { // run job callback
       j->func(j);
   }

@@ -34,8 +34,6 @@
 // You should not, however, change the lmic.[hc]
 
 
-
-//================================================================================
 //================================================================================
 // Target platform as C library
 typedef unsigned char      bit_t;
@@ -51,7 +49,12 @@ typedef unsigned int       uint;
 typedef const char* str_t;
 
 #include <string.h>
-#include "hal.h"
+#include "esphal.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 #define EV(a,b,c) /**/
 #define DO_DEVDB(field1,field2) /**/
 #if !defined(CFG_noassert)
@@ -95,7 +98,7 @@ u1_t radio_rand1 (void);
 
 void radio_init (void);
 void radio_irq_handler (u1_t dio);
-void os_init (void);
+void os_init (uint8_t spi);
 void os_run (void);
 
 //================================================================================
@@ -114,7 +117,8 @@ void os_run (void);
 #error Illegal OSTICKS_PER_SEC - must be in range [10000:64516]. One tick must be 15.5us .. 100us long.
 #endif
 
-typedef s4_t  ostime_t;
+//typedef s4_t  ostime_t;
+typedef ll_s8_t  ostime_t;
 
 #if !HAS_ostick_conv
 #define us2osticks(us)   ((ostime_t)( ((ll_s8_t)(us) * OSTICKS_PER_SEC) / 1000000))
@@ -227,6 +231,8 @@ extern xref2u1_t AESaux;
 u4_t os_aes (u1_t mode, xref2u1_t buf, u2_t len);
 #endif
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _oslmic_h_
