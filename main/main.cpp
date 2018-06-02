@@ -56,7 +56,7 @@ const unsigned LINGER_TIME = 5000;
 extern "C" void do_deepsleep(osjob_t * arg)
 {
     // Turn off oled display
-    ssd.PowerOff();
+    //ssd.PowerOff();
     // Enter deep sleep
     ESP_LOGI(TAG, "Entering deep sleep for %d seconds", deep_sleep_sec);
     esp_deep_sleep(1000000LL * deep_sleep_sec);    
@@ -65,35 +65,24 @@ extern "C" void do_deepsleep(osjob_t * arg)
 extern "C" void do_send(osjob_t * arg)
 {
     char tmpbuff[50];
-    lpp.reset();
+    static uint8_t mydata[] = "Hello, world!";
 
+    ssd.Fill(SSD1306::Black);
+    sprintf(tmpbuff, "LoRaWAN node");
+    ssd.GotoXY(0, 15);
+    ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+        
     ESP_LOGD(TAG, "do_send() called! ... Sending data!");
     if (LMIC.opmode & OP_TXRXPEND) {
         ESP_LOGI(TAG, "OP_TXRXPEND, not sending!");
     } else {
-        float temperature;
-        float humidity;
-        ssd.Fill(SSD1306::Black);
-        // Prepare upstream data transmission at the next possible time.
-        if (htu.readTemperature(&temperature))
-        {
-            sprintf(tmpbuff, "Temperature : %.2f C", temperature);
-            ssd.GotoXY(0, 15);
-            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
-            lpp.addTemperature(1, temperature);
-            ESP_LOGI(TAG, "HTU21D Temperature : %.2f C", temperature);
-        }
-        if (htu.readHumidity(&humidity))
-        {
-            sprintf(tmpbuff, "Humidity   : %.2f%%", humidity);
-            ssd.GotoXY(0,27);
-            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
-            lpp.addRelativeHumidity(2, humidity);
-            ESP_LOGI(TAG, "HTU21D Humidity : %.2f %%", humidity);
-        }
+        LMIC_setTxData2(1, mydata, sizeof(mydata)-1, 0);
+        
+        sprintf(tmpbuff, "Queue: %d bytes", sizeof(mydata)-1);
+        ssd.GotoXY(0, 27);
+        ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
         ssd.UpdateScreen();
-
-        LMIC_setTxData2(1, lpp.getBuffer(), lpp.getSize(), 0); 
+        
         ESP_LOGD(TAG, "Packet queued");
     }
 }
