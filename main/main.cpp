@@ -66,11 +66,6 @@ extern "C" void do_send(osjob_t * arg)
 {
     char tmpbuff[50];
     static uint8_t mydata[] = "Hello, world!";
-
-    ssd.Fill(SSD1306::Black);
-    sprintf(tmpbuff, "LoRaWAN node");
-    ssd.GotoXY(0, 15);
-    ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
         
     ESP_LOGD(TAG, "do_send() called! ... Sending data!");
     if (LMIC.opmode & OP_TXRXPEND) {
@@ -91,8 +86,14 @@ void do_receive()
 {
     if (LMIC.dataLen > 0)
     {
+        char tmpbuff[50];
         // TODO: Copy and process the data from LMIC.dataBeg to a buffer
         ESP_LOGD(TAG, "Received %d of data\n", LMIC.dataLen);
+        
+        sprintf(tmpbuff, "Rx: %d bytes", LMIC.dataLen);
+        ssd.GotoXY(0, 27);
+        ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+        ssd.UpdateScreen();
     }
 }
 
@@ -191,6 +192,16 @@ extern "C" void app_main(void)
   
   // Disable channel 1 to 8
   for(int i = 1; i <= 8; i++) LMIC_disableChannel(i);
+  
+    char tmpbuff[50];
+
+    ssd.Fill(SSD1306::Black);
+    sprintf(tmpbuff, "LoRaWAN node awake");
+    ssd.GotoXY(0, 15);
+    ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+    ssd.UpdateScreen();
+
+  
 
   xTaskCreate(os_runloop, "os_runloop", 1024 * 2, (void* )0, 10, NULL);
 }
