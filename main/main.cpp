@@ -59,7 +59,7 @@ extern "C" void do_deepsleep(osjob_t * arg)
     //ssd.PowerOff();
     // Enter deep sleep
     ESP_LOGI(TAG, "Entering deep sleep for %d seconds", deep_sleep_sec);
-    esp_deep_sleep(1000000LL * deep_sleep_sec);    
+    //esp_deep_sleep(1000000LL * deep_sleep_sec);    
 }
 
 extern "C" void do_send(osjob_t * arg)
@@ -100,23 +100,151 @@ void do_receive()
 // Callbacks from lmic, needs C linkage
 extern "C" void onEvent (ev_t ev) {
     ESP_LOGI(TAG, "Event Time: %lld, %d", os_getTime(), ev);
+        char tmpbuff[50];
     switch(ev) {
         case EV_TXCOMPLETE:
+            sprintf(tmpbuff, "EV_TXCOMPLETE     ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            //ssd.UpdateScreen();
+            
             ESP_LOGI(TAG, "EV_TXCOMPLETE (includes waiting for RX windows)");
             if (LMIC.txrxFlags & TXRX_ACK)
               ESP_LOGI(TAG, "Received ack");
+                sprintf(tmpbuff, "- ACK");
+                ssd.GotoXY(140, 38);
+                ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+                ssd.UpdateScreen();
             if (LMIC.dataLen) {
               ESP_LOGI(TAG, "Received %d bytes of payload\n", LMIC.dataLen);
+                sprintf(tmpbuff, "%d bytes", LMIC.dataLen);
+                ssd.GotoXY(140, 38);
+                ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+                ssd.UpdateScreen();
             }
             // Schedule the send job at some dela
             os_setTimedCallback(&LMIC.osjob, os_getTime()+ms2osticks(LINGER_TIME), FUNC_ADDR(do_deepsleep));
             break;
          case EV_RXCOMPLETE:
+            sprintf(tmpbuff, "EV_RXCOMPLETE     ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
             // data received in ping slot
             ESP_LOGI(TAG, "EV_RXCOMPLETE");
             do_receive();
             break;
+            case EV_SCAN_TIMEOUT:
+            sprintf(tmpbuff, "EV_SCAN_TIMEOUT    ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_SCAN_TIMEOUT");
+            break;
+        case EV_BEACON_FOUND:
+            sprintf(tmpbuff, "EV_BEACON_FOUND    ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_BEACON_FOUND");
+            break;
+        case EV_BEACON_MISSED:
+            sprintf(tmpbuff, "EV_BEACON_MISSED    ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_BEACON_MISSED");
+            break;
+        case EV_BEACON_TRACKED:
+            sprintf(tmpbuff, "EV_BEACON_TRACKED    ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_BEACON_TRACKED    ");
+            break;
+        case EV_JOINING:
+            sprintf(tmpbuff, "EV_JOINING     ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_JOINING");
+            break;
+        case EV_JOINED:
+            sprintf(tmpbuff, "EV_JOINED      ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_JOINED");
+            break;
+        case EV_RFU1:
+            sprintf(tmpbuff, "EV_RFU1       ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_RFU1");
+            break;
+        case EV_JOIN_FAILED:
+            sprintf(tmpbuff, "EV_JOIN_FAILED     ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_JOIN_FAILED");
+            break;
+        case EV_REJOIN_FAILED:
+            sprintf(tmpbuff, "EV_REJOIN_FAILED     ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_REJOIN_FAILED");
+            break;
+        case EV_LOST_TSYNC:
+            sprintf(tmpbuff, "EV_LOST_TSYNC    ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_LOST_TSYNC    ");
+            break;
+        case EV_RESET:
+            sprintf(tmpbuff, "EV_RESET");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_RESET");
+            break;
+        case EV_LINK_DEAD:
+            sprintf(tmpbuff, "EV_LINK_DEAD    ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_LINK_DEAD");
+            break;
+        case EV_LINK_ALIVE:
+            sprintf(tmpbuff, "EV_LINK_ALIVE    ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_LINK_ALIVE");
+            break;
           default:
+            sprintf(tmpbuff, "Unknown event: %d", ev);
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
             ESP_LOGI(TAG, "Unknown event: %d", ev);
             break;
     }
