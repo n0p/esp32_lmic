@@ -241,6 +241,14 @@ extern "C" void onEvent (ev_t ev) {
   
             ESP_LOGI(TAG, "EV_LINK_ALIVE");
             break;
+            case EV_TXSTART:
+            sprintf(tmpbuff, "EV_TXSTART     ");
+            ssd.GotoXY(0, 38);
+            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+            ssd.UpdateScreen();
+  
+            ESP_LOGI(TAG, "EV_LINK_ALIVE");
+            break;
           default:
             sprintf(tmpbuff, "Unknown event: %d", ev);
             ssd.GotoXY(0, 38);
@@ -280,6 +288,14 @@ void blink_task(void *pvParameter)
         gpio_set_level(BLINK_GPIO, 1);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         
+    }
+}
+
+void beacon_task(void *pvParameter)
+{
+    while(1) {
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        do_send(NULL);
     }
 }
 
@@ -349,6 +365,7 @@ extern "C" void app_main(void)
 
   
   xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
+  xTaskCreate(&beacon_task, "beacon_task", 2048, NULL, 5, NULL);
 
   xTaskCreate(os_runloop, "os_runloop", 1024 * 2, (void* )0, 10, NULL);
 }
