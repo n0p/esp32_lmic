@@ -17,6 +17,8 @@
 
 #include "addrconf.h" // DEVADDR & KEYS storage
 
+#define BLINK_GPIO GPIO_NUM_2
+
 void os_getArtEui (u1_t* buf) { }
 void os_getDevEui (u1_t* buf) { }
 void os_getDevKey (u1_t* buf) { }
@@ -265,6 +267,22 @@ void os_runloop(void * arg)
   }
 }
 
+void blink_task(void *pvParameter)
+{
+    gpio_pad_select_gpio(BLINK_GPIO);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
+    while(1) {
+        /* Blink off (output low) */
+        gpio_set_level(BLINK_GPIO, 0);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        /* Blink on (output high) */
+        gpio_set_level(BLINK_GPIO, 1);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        
+    }
+}
+
 extern "C" void app_main(void)
 {
   ++boot_count;
@@ -330,6 +348,7 @@ extern "C" void app_main(void)
     ssd.UpdateScreen();
 
   
+  xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
 
   xTaskCreate(os_runloop, "os_runloop", 1024 * 2, (void* )0, 10, NULL);
 }
