@@ -254,7 +254,6 @@ extern "C" void onEvent (ev_t ev) {
             ssd.GotoXY(0, 38);
             ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
             ssd.UpdateScreen();
-  
             ESP_LOGI(TAG, "Unknown event: %d", ev);
             break;
     }
