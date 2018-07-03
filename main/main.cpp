@@ -12,16 +12,32 @@
 #include "I2CMaster.h"
 #include "SPIMaster.h"
 #include "SSD1306.h"
-#include "HTU21D.h"
+//#include "HTU21D.h"
 #include "CayenneLPP.h"
 
 #include "addrconf.h" // DEVADDR & KEYS storage
 
 #define BLINK_GPIO GPIO_NUM_2
 
-void os_getArtEui (u1_t* buf) { }
-void os_getDevEui (u1_t* buf) { }
-void os_getDevKey (u1_t* buf) { }
+//void os_getArtEui (u1_t* buf) { }
+//void os_getDevEui (u1_t* buf) { }
+//void os_getDevKey (u1_t* buf) { }
+
+// provide application router ID (8 bytes, LSBF)
+extern "C" void os_getArtEui (u1_t* buf) {
+  memcpy(buf, APPEUI, 8);
+}
+
+// provide device ID (8 bytes, LSBF)
+extern "C" void os_getDevEui (u1_t* buf) {
+  memcpy(buf, DEVEUI, 8);
+}
+
+// provide device key (16 bytes)
+extern "C" void os_getDevKey (u1_t* buf) {
+  memcpy(buf, DEVKEY, 16);
+}
+
 
 static const char *TAG = "MAIN";
 
@@ -37,27 +53,25 @@ SPIMaster spi(HSPI_HOST, GPIO_NUM_19, GPIO_NUM_27, GPIO_NUM_5);
 // Using the TTGO ESP32 Lora or Heltec ESP32 Lora board
 // https://www.thethingsnetwork.org/forum/t/big-esp32-sx127x-topic-part-2/11973
 extern "C" const lmic_pinmap_t lmic_pins = {
-    .nss = 18,
-    .rst = 14,
-    .dio = {26, 33, 32},
-    // MISO, MOSI, SCK
-    //.spi = {19, 27, 5},
+  .nss = 18,
+  .rst = 14,
+  .dio = {26, 33, 32},
+  // MISO, MOSI, SCK
+  //.spi = {19, 27, 5},
 };
-
 
 // I2CMaster (I2C Num, SDA, SCL)
 I2CMaster i2c(I2C_NUM_1, GPIO_NUM_4, GPIO_NUM_15);
 SSD1306   ssd(i2c, GPIO_NUM_16);
-HTU21D    htu(i2c);
 CayenneLPP lpp;
 
 void oled_update_status(char* string)
 {
-    char tmpbuff[50];
-    sprintf(tmpbuff, string);
-    ssd.GotoXY(0, 38);
-    ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
-    ssd.UpdateScreen();
+  char tmpbuff[50];
+  sprintf(tmpbuff, string);
+  ssd.GotoXY(0, 38);
+  ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+  ssd.UpdateScreen();
 }            
 
 // Time to linger before going to deep sleep
@@ -65,143 +79,143 @@ const unsigned LINGER_TIME = 5000;
 
 extern "C" void do_deepsleep(osjob_t * arg)
 {
-    // Turn off oled display
-    //ssd.PowerOff();
-    // Enter deep sleep
-    ESP_LOGI(TAG, "Entering deep sleep for %d seconds", deep_sleep_sec);
-    //esp_deep_sleep(1000000LL * deep_sleep_sec);    
+  // Turn off oled display
+  //ssd.PowerOff();
+  // Enter deep sleep
+  ESP_LOGI(TAG, "Entering deep sleep for %d seconds", deep_sleep_sec);
+  //esp_deep_sleep(1000000LL * deep_sleep_sec);    
 }
 
 extern "C" void do_send(osjob_t * arg)
 {
-    char tmpbuff[50];
-    static uint8_t mydata[] = "Hello, world!";
-        
-    ESP_LOGD(TAG, "do_send() called! ... Sending data!");
-    if (LMIC.opmode & OP_TXRXPEND) {
-        ESP_LOGI(TAG, "OP_TXRXPEND, not sending!");
-    } else {
-        LMIC_setTxData2(1, mydata, sizeof(mydata)-1, 0);
-        
-        sprintf(tmpbuff, "Queue: %d bytes", sizeof(mydata)-1);
-        ssd.GotoXY(0, 27);
-        ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
-        ssd.UpdateScreen();
-        
-        ESP_LOGD(TAG, "Packet queued");
-    }
+  char tmpbuff[50];
+  static uint8_t mydata[] = "Hello, world!";
+      
+  ESP_LOGD(TAG, "do_send() called! ... Sending data!");
+  if (LMIC.opmode & OP_TXRXPEND) {
+    ESP_LOGI(TAG, "OP_TXRXPEND, not sending!");
+  } else {
+    LMIC_setTxData2(1, mydata, sizeof(mydata)-1, 0);
+    
+    sprintf(tmpbuff, "Queue: %d bytes", sizeof(mydata)-1);
+    ssd.GotoXY(0, 27);
+    ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+    ssd.UpdateScreen();
+    
+    ESP_LOGD(TAG, "Packet queued");
+  }
 }
 
 void do_receive()
 {
-    if (LMIC.dataLen > 0)
-    {
-        char tmpbuff[50];
-        // TODO: Copy and process the data from LMIC.dataBeg to a buffer
-        ESP_LOGD(TAG, "Received %d of data\n", LMIC.dataLen);
-        
-        sprintf(tmpbuff, "Rx: %d bytes", LMIC.dataLen);
-        ssd.GotoXY(0, 27);
-        ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
-        ssd.UpdateScreen();
-    }
+  if (LMIC.dataLen > 0)
+  {
+    char tmpbuff[50];
+    // TODO: Copy and process the data from LMIC.dataBeg to a buffer
+    ESP_LOGD(TAG, "Received %d of data\n", LMIC.dataLen);
+    
+    sprintf(tmpbuff, "Rx: %d bytes", LMIC.dataLen);
+    ssd.GotoXY(0, 27);
+    ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+    ssd.UpdateScreen();
+  }
 }
 
 // Callbacks from lmic, needs C linkage
 extern "C" void onEvent (ev_t ev) {
-    ESP_LOGI(TAG, "Event Time: %lld, %d", os_getTime(), ev);
-        char tmpbuff[50];
-    switch(ev) {
-        case EV_TXCOMPLETE:
-            oled_update_status("EV_TXCOMPLETE     ");
-            
-            ESP_LOGI(TAG, "EV_TXCOMPLETE (includes waiting for RX windows)");
-            if (LMIC.txrxFlags & TXRX_ACK)
-              ESP_LOGI(TAG, "Received ack");
-                sprintf(tmpbuff, "- ACK");
-                ssd.GotoXY(140, 38);
-                ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
-                ssd.UpdateScreen();
-            if (LMIC.dataLen) {
-              ESP_LOGI(TAG, "Received %d bytes of payload\n", LMIC.dataLen);
-                sprintf(tmpbuff, "%d bytes", LMIC.dataLen);
-                ssd.GotoXY(140, 38);
-                ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
-                ssd.UpdateScreen();
-            }
-            // Schedule the send job at some dela
-            os_setTimedCallback(&LMIC.osjob, os_getTime()+ms2osticks(LINGER_TIME), FUNC_ADDR(do_deepsleep));
-            break;
-         case EV_RXCOMPLETE:
-            oled_update_status("EV_RXCOMPLETE     ");
-            // data received in ping slot
-            ESP_LOGI(TAG, "EV_RXCOMPLETE");
-            do_receive();
-            break;
-            case EV_SCAN_TIMEOUT:
-            oled_update_status("EV_SCAN_TIMEOUT    ");
-            ESP_LOGI(TAG, "EV_SCAN_TIMEOUT");
-            break;
-        case EV_BEACON_FOUND:
-            oled_update_status("EV_BEACON_FOUND    ");
-            ESP_LOGI(TAG, "EV_BEACON_FOUND");
-            break;
-        case EV_BEACON_MISSED:
-            oled_update_status("EV_BEACON_MISSED    ");
-            ESP_LOGI(TAG, "EV_BEACON_MISSED");
-            break;
-        case EV_BEACON_TRACKED:
-            oled_update_status("EV_BEACON_TRACKED    ");
-            ESP_LOGI(TAG, "EV_BEACON_TRACKED    ");
-            break;
-        case EV_JOINING:
-            oled_update_status("EV_JOINING     ");
-            ESP_LOGI(TAG, "EV_JOINING");
-            break;
-        case EV_JOINED:
-            oled_update_status("EV_JOINED      ");
-            ESP_LOGI(TAG, "EV_JOINED");
-            break;
-        case EV_RFU1:
-            oled_update_status("EV_RFU1       ");
-            ESP_LOGI(TAG, "EV_RFU1");
-            break;
-        case EV_JOIN_FAILED:
-            oled_update_status("EV_JOIN_FAILED     ");
-            ESP_LOGI(TAG, "EV_JOIN_FAILED");
-            break;
-        case EV_REJOIN_FAILED:
-            oled_update_status("EV_REJOIN_FAILED     ");
-            ESP_LOGI(TAG, "EV_REJOIN_FAILED");
-            break;
-        case EV_LOST_TSYNC:
-            oled_update_status("EV_LOST_TSYNC    ");
-            ESP_LOGI(TAG, "EV_LOST_TSYNC    ");
-            break;
-        case EV_RESET:
-            oled_update_status("EV_RESET");
-            ESP_LOGI(TAG, "EV_RESET");
-            break;
-        case EV_LINK_DEAD:
-            oled_update_status("EV_LINK_DEAD    ");
-            ESP_LOGI(TAG, "EV_LINK_DEAD");
-            break;
-        case EV_LINK_ALIVE:
-            oled_update_status("EV_LINK_ALIVE    ");
-            ESP_LOGI(TAG, "EV_LINK_ALIVE");
-            break;
-        case EV_TXSTART:
-            oled_update_status("EV_TXSTART     ");
-            ESP_LOGI(TAG, "EV_TXSTART");
-            break;
-          default:
-            sprintf(tmpbuff, "Unknown event: %d", ev);
-            ssd.GotoXY(0, 38);
-            ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
-            ssd.UpdateScreen();
-            ESP_LOGI(TAG, "Unknown event: %d", ev);
-            break;
-    }
+  ESP_LOGI(TAG, "Event Time: %lld, %d", os_getTime(), ev);
+      char tmpbuff[50];
+  switch(ev) {
+    case EV_TXCOMPLETE:
+      oled_update_status("EV_TXCOMPLETE     ");
+      
+      ESP_LOGI(TAG, "EV_TXCOMPLETE (includes waiting for RX windows)");
+      if (LMIC.txrxFlags & TXRX_ACK)
+        ESP_LOGI(TAG, "Received ack");
+        sprintf(tmpbuff, "- ACK");
+        ssd.GotoXY(140, 38);
+        ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+        ssd.UpdateScreen();
+      if (LMIC.dataLen) {
+        ESP_LOGI(TAG, "Received %d bytes of payload\n", LMIC.dataLen);
+        sprintf(tmpbuff, "%d bytes", LMIC.dataLen);
+        ssd.GotoXY(140, 38);
+        ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+        ssd.UpdateScreen();
+      }
+      // Schedule the send job at some delay
+      os_setTimedCallback(&LMIC.osjob, os_getTime()+ms2osticks(LINGER_TIME), FUNC_ADDR(do_deepsleep));
+      break;
+    case EV_RXCOMPLETE:
+      oled_update_status("EV_RXCOMPLETE     ");
+      // data received in ping slot
+      ESP_LOGI(TAG, "EV_RXCOMPLETE");
+      do_receive();
+      break;
+    case EV_SCAN_TIMEOUT:
+      oled_update_status("EV_SCAN_TIMEOUT    ");
+      ESP_LOGI(TAG, "EV_SCAN_TIMEOUT");
+      break;
+    case EV_BEACON_FOUND:
+      oled_update_status("EV_BEACON_FOUND    ");
+      ESP_LOGI(TAG, "EV_BEACON_FOUND");
+      break;
+    case EV_BEACON_MISSED:
+      oled_update_status("EV_BEACON_MISSED    ");
+      ESP_LOGI(TAG, "EV_BEACON_MISSED");
+      break;
+    case EV_BEACON_TRACKED:
+      oled_update_status("EV_BEACON_TRACKED    ");
+      ESP_LOGI(TAG, "EV_BEACON_TRACKED    ");
+      break;
+    case EV_JOINING:
+      oled_update_status("EV_JOINING     ");
+      ESP_LOGI(TAG, "EV_JOINING");
+      break;
+    case EV_JOINED:
+      oled_update_status("EV_JOINED      ");
+      ESP_LOGI(TAG, "EV_JOINED");
+      break;
+    case EV_RFU1:
+      oled_update_status("EV_RFU1       ");
+      ESP_LOGI(TAG, "EV_RFU1");
+      break;
+    case EV_JOIN_FAILED:
+      oled_update_status("EV_JOIN_FAILED     ");
+      ESP_LOGI(TAG, "EV_JOIN_FAILED");
+      break;
+    case EV_REJOIN_FAILED:
+      oled_update_status("EV_REJOIN_FAILED     ");
+      ESP_LOGI(TAG, "EV_REJOIN_FAILED");
+      break;
+    case EV_LOST_TSYNC:
+      oled_update_status("EV_LOST_TSYNC    ");
+      ESP_LOGI(TAG, "EV_LOST_TSYNC    ");
+      break;
+    case EV_RESET:
+      oled_update_status("EV_RESET");
+      ESP_LOGI(TAG, "EV_RESET");
+      break;
+    case EV_LINK_DEAD:
+      oled_update_status("EV_LINK_DEAD    ");
+      ESP_LOGI(TAG, "EV_LINK_DEAD");
+      break;
+    case EV_LINK_ALIVE:
+      oled_update_status("EV_LINK_ALIVE    ");
+      ESP_LOGI(TAG, "EV_LINK_ALIVE");
+      break;
+    case EV_TXSTART:
+      oled_update_status("EV_TXSTART     ");
+      ESP_LOGI(TAG, "EV_TXSTART");
+      break;
+    default:
+      sprintf(tmpbuff, "Unknown event: %d", ev);
+      ssd.GotoXY(0, 38);
+      ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+      ssd.UpdateScreen();
+      ESP_LOGI(TAG, "Unknown event: %d", ev);
+      break;
+  }
 }
 
 void os_runloop(void * arg) 
@@ -221,36 +235,37 @@ void os_runloop(void * arg)
 
 void blink_task(void *pvParameter)
 {
-    gpio_pad_select_gpio(BLINK_GPIO);
-    /* Set the GPIO as a push/pull output */
-    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
-    while(1) {
-        /* Blink off (output low) */
-        gpio_set_level(BLINK_GPIO, 0);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        /* Blink on (output high) */
-        gpio_set_level(BLINK_GPIO, 1);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        
-    }
+  gpio_pad_select_gpio(BLINK_GPIO);
+  /* Set the GPIO as a push/pull output */
+  gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
+  while(1) {
+    /* Blink off (output low) */
+    gpio_set_level(BLINK_GPIO, 0);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    /* Blink on (output high) */
+    gpio_set_level(BLINK_GPIO, 1);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+      
+  }
 }
 
 void beacon_task(void *pvParameter)
 {
-    while(1) {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        do_send(NULL);
-    }
+  while(1) {
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
+    do_send(NULL);
+  }
 }
 
 extern "C" void app_main(void)
 {
   ++boot_count;
   ESP_LOGI(TAG, "Wake(%d) initializing ....", boot_count);
+  xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
+  
   // Devices attached to the I2C Bus
   i2c.init();
   ssd.init();
-  htu.init();
 
   spi.init();
   // LMIC os_init has C linkage, make sure
@@ -299,16 +314,15 @@ extern "C" void app_main(void)
   // Disable channel 1 to 8
   for(int i = 1; i <= 8; i++) LMIC_disableChannel(i);
   
-    char tmpbuff[50];
+  char tmpbuff[50];
 
-    ssd.Fill(SSD1306::Black);
-    sprintf(tmpbuff, "LoRaWAN node awake");
-    ssd.GotoXY(0, 15);
-    ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
-    ssd.UpdateScreen();
+  ssd.Fill(SSD1306::Black);
+  sprintf(tmpbuff, "LoRaWAN node awake");
+  ssd.GotoXY(0, 15);
+  ssd.Puts(&tmpbuff[0], &Font_7x10, SSD1306::White);
+  ssd.UpdateScreen();
 
-  
-  xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
+
   xTaskCreate(&beacon_task, "beacon_task", 2048, NULL, 5, NULL);
 
   xTaskCreate(os_runloop, "os_runloop", 1024 * 2, (void* )0, 10, NULL);

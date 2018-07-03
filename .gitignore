@@ -2,4 +2,6 @@ build/
 sdkconfig.old
 main/addrconf.h
 *.kate-swp
-
+.cproject
+.project
+.settings/
